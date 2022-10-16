@@ -8,7 +8,7 @@ if [ -d "./dist" ]; then
 fi
 
 # Create New Build
-python -m build
+python setup.py build bdist_wheel
 
 # Upload New Build
 twine upload dist/* -u DaMuffinDev
