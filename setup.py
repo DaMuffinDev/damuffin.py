@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="damuffin",
-    version="1.0.0",
+    version="1.0.1",
     url="https://github.com/DaMuffinDev/damuffin.py",
     description="A simple python module for the DaMuffinApi",
     author="DaMuffinDev",
@@ -15,5 +15,7 @@ setup(
     ],
     keywords="damuffin",
     packages=find_packages(),
-    install_requires=[]
+    install_requires=[
+        "pylzma==0.5.0"
+    ]
 )
