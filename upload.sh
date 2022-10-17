@@ -7,8 +7,10 @@ if [ -d "./dist" ]; then
     rm -r "./dist"
 fi
 
+PASSWORD=$( cat password.txt )
+
 # Create New Build
 python setup.py build bdist_wheel
 
 # Upload New Build
-twine upload dist/* -u DaMuffinDev
+twine upload dist/* -u DaMuffinDev -p $PASSWORD
