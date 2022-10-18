@@ -1,6 +1,7 @@
 import subprocess
 import netifaces
 import requests
+import hector
 import socket
 import uuid
 import json
@@ -186,33 +187,40 @@ class Network:
             self.recieve_rate = get_recieve_rate()
             self.transmit_rate = get_transmit_rate()
     
-    def to_json(self, filename, dir="./", override=True, raise_error=False, pretty=False):
+    def to_json(self, filename, dir="./", override=True, ignore_errors=False, pretty=False, hexify=False, hex_glue=None):
         path = os.path.join(dir, filename)
 
         if os.path.exists(path):
-            if not override and raise_error: raise FileExistsError(f"Unable to compile network data to json file {filename}.")
-            elif not override and not raise_error: return f"Unable compile to json file."
+            if not override: 
+                if not ignore_errors: raise FileExistsError((
+                    f"Unable to convert network data to json file {filename}.",
+                    "Either provide a new path that doesn't exist or enable override.",
+                ))
+                return f"Unable to create json file."
         
-        json_data = {
-            "connected": self.connected,
-            "physical address": self.phyiscal_address,
-            "guid": self.GUID,
-            "profiles": self.profiles,
-            "passwords": self.passwords,
+        with open(path, "wb") as json_file:
+            json_dict = {
+                "connected": self.connected,
+                "physical address": self.phyiscal_address,
+                "guid": self.GUID,
+                "profiles": self.profiles,
+                "passwords": self.passwords,
 
-            "default gateway": self.default_gateway,
-            "public ips": self.public_ips,
-            "private ip": self.private_ip,
-            "suspected vpn": self.suspected_vpn,
-            
-            "ssid": self.SSID,
-            "bssid": self.BSSID,
-            "recieve rate": self.recieve_rate,
-            "transmite rate": self.transmit_rate,
+                "default gateway": self.default_gateway,
+                "public ips": self.public_ips,
+                "private ip": self.private_ip,
+                "suspected vpn": self.suspected_vpn,
+                
+                "ssid": self.SSID,
+                "bssid": self.BSSID,
+                "recieve rate": self.recieve_rate,
+                "transmite rate": self.transmit_rate,
 
-            "ipconfig": self.ipconfig
-        }
+                "ipconfig": self.ipconfig
+            }
 
-        with open(path, "w") as json_file:
-            if pretty: json_file.write(json.dumps(json_data, indent=4)); return
-            json_file.write(json.dumps(json_data))
+            if hexify:
+                if hex_glue is None: raise ValueError("Hexify is set to True. A 'raw' or 'normal' string must be provided for the 'hex_glue' parameter.")
+                json_file.write(hector.dumps(hector.to_hex(json_dict, hex_glue), pretty=pretty).encode()); return
+                
+            json_file.write(json.dumps(json_dict, index=4).encode() if pretty else json.dumps(json_dict).encode())
