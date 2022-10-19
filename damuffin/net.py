@@ -1,7 +1,7 @@
+from damuffin import hector
 import subprocess
 import netifaces
 import requests
-import hector
 import socket
 import uuid
 import json

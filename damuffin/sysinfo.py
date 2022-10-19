@@ -1,9 +1,8 @@
+from damuffin import net, hector
 from math import ceil
 import subprocess
-import hector
 import json
 import wmi
-import net
 import os
 
 __all__ = ["sysinfo", "init", "find_system_info", "get_systeminfo", "System"]

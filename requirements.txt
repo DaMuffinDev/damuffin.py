@@ -1,0 +1,8 @@
+wmi
+pywin32
+pylzma
+netifaces
+requests
+wheel
+twine
+build
