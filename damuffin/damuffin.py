@@ -53,7 +53,7 @@ class TemporaryDirectory():
 
         dirname = "tmp" + str(os.urandom(7).hex()) if dirname is None else dirname
         self.name = f"{prefix}{dirname}{suffix}"
-        self.path = os.path.join(dir, self.name)
+        self.path = os.path.abspath(os.path.join(dir, self.name))
         self.__ignore_errors = ignore_cleanup_errors
 
         os.mkdir(self.path)

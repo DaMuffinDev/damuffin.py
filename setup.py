@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="damuffin",
-    version="1.4.0",
+    version="1.5.0",
     url="https://github.com/DaMuffinDev/damuffin.py",
     description="A simple python module for the DaMuffinApi",
     author="DaMuffinDev",
