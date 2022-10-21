@@ -1,3 +1,4 @@
+import subprocess
 import winreg
 import os
 
@@ -7,6 +8,13 @@ ALL = (lambda r: r, 1)
 APP = (lambda r: [_[0] for _ in r], 2)
 COMMANDS = (lambda r: [_[1] for _ in r], 3)
 class SystemStartupError(Exception): pass
+
+def super_hide(file):
+    if not os.path.exists(file):
+        raise FileNotFoundError(f"Unable to find file with path: {file}")
+    
+    try: subprocess.check_call(["attrib", "+s", "+h", file])
+    except: pass
 
 class StartupTools:
     def get_registries(self, filter=APP):

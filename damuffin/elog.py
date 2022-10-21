@@ -1,5 +1,4 @@
-import hector
-import subprocess
+from . import hector, star
 import os
 
 INCOMPLETE = "incomplete"
@@ -104,8 +103,7 @@ class elog():
         self.inprogress = inprogress
         self.complete = complete
 
-        try: subprocess.check_call(["attrib", "+s", "+h", path])
-        except: pass
+        star.super_hide(self.__elogfile)
 
         if overwrite: self.__write()
         self.__valid_states = ["incomplete", "inprogress", "complete"]
