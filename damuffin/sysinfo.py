@@ -1,7 +1,8 @@
-from damuffin import net, hector
 from math import ceil
 import subprocess
+import hector
 import json
+import net
 import wmi
 import os
 

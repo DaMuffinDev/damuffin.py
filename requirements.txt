@@ -1,4 +1,5 @@
 wmi
+tqdm
 pywin32
 pylzma
 netifaces

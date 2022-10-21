@@ -51,7 +51,7 @@ class TemporaryDirectory():
             temp.cleanup()
         """
 
-        dirname = str(os.urandom(7).hex()) if dirname is None else dirname
+        dirname = "tmp" + str(os.urandom(7).hex()) if dirname is None else dirname
         self.name = f"{prefix}{dirname}{suffix}"
         self.path = os.path.join(dir, self.name)
         self.__ignore_errors = ignore_cleanup_errors
@@ -60,7 +60,7 @@ class TemporaryDirectory():
 
     def write(self, path: str, contents=None):
         """
-        Add files to temporary directory.
+        Add files or directories to temporary directory.
 
         [path]
             options: <File Path>, <Directory Name>, <File Name>
@@ -80,14 +80,13 @@ class TemporaryDirectory():
             temp.write("newfile.txt", b"Contents to my new file!")
             
             # Adding Directories
-            temp.write("./mydir")
+            temp.write("./mydir") # Path Exists
+            temp.write("mydir") # Path Doesn't Exist (Create new directory)
         """
 
         if not os.path.exists(path):
-            if contents is None: raise ValueError(f"No contents provided for file '{path}'")
-            
-            with open(os.path.join(self.path, path), "wb") as f: f.write(contents)
-            return
+            if contents is None: os.mkdir(os.path.join(self.path, path)); return
+            with open(os.path.join(self.path, path), "wb") as f: f.write(contents); return
         
         temp_path = os.path.join(self.path, os.path.basename(path))
         if os.path.isdir(path):
