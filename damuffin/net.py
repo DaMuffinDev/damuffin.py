@@ -1,7 +1,7 @@
+from . import hector
 import subprocess
 import netifaces
 import requests
-import hector
 import socket
 import uuid
 import json
@@ -223,4 +223,4 @@ class Network:
                 if hex_glue is None: raise ValueError("Hexify is set to True. A 'raw' or 'normal' string must be provided for the 'hex_glue' parameter.")
                 json_file.write(hector.dumps(hector.to_hex(json_dict, hex_glue), pretty=pretty).encode()); return
                 
-            json_file.write(json.dumps(json_dict, index=4).encode() if pretty else json.dumps(json_dict).encode())
+            json_file.write(json.dumps(json_dict, indent=4).encode() if pretty else json.dumps(json_dict).encode())

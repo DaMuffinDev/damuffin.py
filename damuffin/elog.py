@@ -1,4 +1,4 @@
-import hector
+from . import hector
 import os
 
 INCOMPLETE = "incomplete"

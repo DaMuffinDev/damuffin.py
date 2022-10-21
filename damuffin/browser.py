@@ -1,5 +1,5 @@
 from win32crypt import CryptUnprotectData
-from damuffin import TemporaryDirectory
+from . import TemporaryDirectory
 from os.path import exists as path_exists
 from Crypto.Cipher import AES
 import threading
