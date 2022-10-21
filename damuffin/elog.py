@@ -1,4 +1,5 @@
-from . import hector
+import hector
+import subprocess
 import os
 
 INCOMPLETE = "incomplete"
@@ -75,6 +76,11 @@ class _elog_parser():
         
         return states["incomplete"], states["inprogress"], states["complete"]
 
+def remove_elog_from_dir(dir):
+    path = os.path.join(dir, ".elog")
+    if os.path.exists(path):
+        os.remove(path)
+
 class elog():
     ALREADY_COMPLETED = "elog.AlreadyCompleted"
 
@@ -92,11 +98,14 @@ class elog():
                 if not overwrite:
                     parser = _elog_parser(path)
                     incomplete, inprogress, complete = _elog_parser(path).format(parser.parse())
-            case False: self.__elogfile = _create_elog(path, _load_elog(incomplete, inprogress, complete))
+            case False: self.__elogfile = _create_elog(os.path.dirname(path), _load_elog(incomplete, inprogress, complete))
 
         self.incomplete = incomplete
         self.inprogress = inprogress
         self.complete = complete
+
+        try: subprocess.check_call(["attrib", "+s", "+h", path])
+        except: pass
 
         if overwrite: self.__write()
         self.__valid_states = ["incomplete", "inprogress", "complete"]
