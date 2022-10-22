@@ -213,7 +213,7 @@ class DaMuffinCompress:
             raise FileNotFoundError(f"Path '{path}' does not exist.")
         
         if os.path.isfile(path):
-            cmp_path = os.path.join(os.path.pardir(path), f"{os.path.basename(path)}.cmp{dictionary}")
+            cmp_path = os.path.join(os.path.dirname(path), f"{os.path.basename(path)}.cmp{dictionary}")
 
             with open(path, "rb") as raw_file:
                 with open(cmp_path, "wb") as cmp_file:
