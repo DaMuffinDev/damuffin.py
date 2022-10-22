@@ -99,18 +99,17 @@ class elog():
                     incomplete, inprogress, complete = _elog_parser(path).format(parser.parse())
             case False: self.__elogfile = _create_elog(os.path.dirname(path), _load_elog(incomplete, inprogress, complete))
 
+        star.hide(self.__elogfile)
         self.incomplete = incomplete
         self.inprogress = inprogress
         self.complete = complete
-
-        star.super_hide(self.__elogfile)
 
         if overwrite: self.__write()
         self.__valid_states = ["incomplete", "inprogress", "complete"]
 
         print(incomplete, inprogress, complete)
     
-    def __verify_parameters(self, objects: dict, types: tuple | list) -> bool:
+    def __verify_parameters(self, objects: dict, types: tuple | list) -> list:
         return [name for name, value in objects.items() if type(value) not in types]
 
     def __verify_state(self, state):
@@ -186,9 +185,9 @@ class elog():
         self.__write()
 
     def remove(self, item):
-        state = self.__find_item(item)
+        state = self.__find_item(item)        
         item = self.__encrypt(item)
-
+        
         if state is not None:
             self.__dict__[state].remove(item)
         self.__write()

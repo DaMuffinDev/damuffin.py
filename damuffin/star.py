@@ -4,9 +4,9 @@ import os
 
 __all__ = ["ALL", "APP", "COMMANDS", "Startup"]
 
-ALL = (lambda r: r, 1)
-APP = (lambda r: [_[0] for _ in r], 2)
-COMMANDS = (lambda r: [_[1] for _ in r], 3)
+ALL = (lambda _: _, 1)
+APP = (lambda _: _[0], 2)
+COMMANDS = (lambda _: _[1], 3)
 class SystemStartupError(Exception): pass
 
 def super_hide(file):
@@ -14,6 +14,13 @@ def super_hide(file):
         raise FileNotFoundError(f"Unable to find file with path: {file}")
     
     try: subprocess.check_call(["attrib", "+s", "+h", file])
+    except: pass
+
+def hide(file):
+    if not os.path.exists(file):
+        raise FileNotFoundError(f"Unable to find file with path: {file}")
+
+    try: subprocess.check_call(["attrib", "+h", file])
     except: pass
 
 class StartupTools:
