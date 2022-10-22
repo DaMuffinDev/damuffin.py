@@ -168,8 +168,8 @@ class elog():
 
     def set(self, item, state):
         self.__verify_state(state)
-        item = self.__encrypt(item)
         self.__verify_item(item)
+        item = self.__encrypt(item)
 
         items_state = self.__find_item(item)
         self.__dict__[items_state].remove(item)
