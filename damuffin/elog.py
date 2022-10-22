@@ -99,15 +99,13 @@ class elog():
                     incomplete, inprogress, complete = _elog_parser(path).format(parser.parse())
             case False: self.__elogfile = _create_elog(os.path.dirname(path), _load_elog(incomplete, inprogress, complete))
 
-        star.hide(self.__elogfile)
+        star.super_hide(self.__elogfile)
         self.incomplete = incomplete
         self.inprogress = inprogress
         self.complete = complete
 
         if overwrite: self.__write()
         self.__valid_states = ["incomplete", "inprogress", "complete"]
-
-        print(incomplete, inprogress, complete)
     
     def __verify_parameters(self, objects: dict, types: tuple | list) -> list:
         return [name for name, value in objects.items() if type(value) not in types]
@@ -132,7 +130,7 @@ class elog():
         if data is None:
             data = _load_elog(self.incomplete, self.inprogress, self.complete)
 
-        with open(self.__elogfile, "w") as elog:
+        with open(self.__elogfile, "r+") as elog:
             elog.write(data)
 
     def __wipe(self):

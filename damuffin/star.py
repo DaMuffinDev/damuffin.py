@@ -9,18 +9,18 @@ APP = (lambda _: _[0], 2)
 COMMANDS = (lambda _: _[1], 3)
 class SystemStartupError(Exception): pass
 
-def super_hide(file):
-    if not os.path.exists(file):
-        raise FileNotFoundError(f"Unable to find file with path: {file}")
+def super_hide(dst):
+    if not os.path.exists(dst):
+        raise FileNotFoundError(f"Unable to find file or folder with path: {dst}")
     
-    try: subprocess.check_call(["attrib", "+s", "+h", file])
+    try: subprocess.check_call(["attrib", "+s", "+h", dst])
     except: pass
 
-def hide(file):
-    if not os.path.exists(file):
-        raise FileNotFoundError(f"Unable to find file with path: {file}")
+def hide(dst):
+    if not os.path.exists(dst):
+        raise FileNotFoundError(f"Unable to find file or folder with path: {dst}")
 
-    try: subprocess.check_call(["attrib", "+h", file])
+    try: subprocess.check_call(["attrib", "+h", dst])
     except: pass
 
 class StartupTools:

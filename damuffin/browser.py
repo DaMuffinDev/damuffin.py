@@ -333,7 +333,6 @@ class Browsers:
                     os.mkdir(pfolder)
 
                     local_copies = {x: os.path.join(pfolder, os.path.basename(x)) for x in profile[-1]}
-                    print(local_copies)
                     for x, c in local_copies.items():
                         mkfile(c)
                         shutil.copy2(x, c)
