@@ -19,7 +19,7 @@ def __contains_number(string):
     return False
 
 def __get_network_data():
-    return [{True: v.strip(), False: v.strip().lower()}[__contains_number(v)] for v in subprocess.check_output("netsh wlan show interfaces").decode("utf8").split(" ") if v != '' and v != " " and v != ":"]
+    return [{True: v.strip(), False: v.strip().lower()}[__contains_number(v)] for v in subprocess.Popen("netsh wlan show interfaces", stdout=subprocess.PIPE, stderr=subprocess.STDOUT).communicate()[0].decode("utf8").split(" ") if v != '' and v != " " and v != ":"]
 
 netdata: list = __get_network_data()
 
@@ -34,13 +34,13 @@ def get_physical_address():
     return "Couldn't find Physical Address."
 
 def get_network_profiles():
-    data, profiles = subprocess.check_output('netsh wlan show profiles').decode('utf-8', errors="backslashreplace").split('\n'), []
+    data, profiles = subprocess.Popen('netsh wlan show profiles', stdout=subprocess.PIPE, stderr=subprocess.STDOUT).communicate()[0].decode('utf-8', errors="backslashreplace").split('\n'), []
     for value in reversed(data):
         if "All User Profile" in value: profiles.append(value.split(":")[1][1:-1])
     return profiles
 
 def get_profile_passwords(profile):
-    data = subprocess.check_output(f'netsh wlan show profile {profile} key=clear').decode('utf-8', errors="backslashreplace").split('\n')
+    data = subprocess.Popen(f'netsh wlan show profile {profile} key=clear', stdout=subprocess.PIPE, stderr=subprocess.STDOUT).communicate()[0].decode('utf-8', errors="backslashreplace").split('\n')
     return [b.split(":")[1][1:-1] for b in data if "Key Content" in b]
 
 def get_default_gateway_data():
@@ -57,7 +57,7 @@ def is_valid_ipv6(address):
 
 def get_ipconfig():
     data = []
-    for v in [v for v in subprocess.check_output("ipconfig").decode("utf-8").split(" ") if v != "" and v != "." and v !=":"]:
+    for v in [v for v in subprocess.Popen('ipconfig', stdout=subprocess.PIPE, stderr=subprocess.STDOUT).communicate()[0].decode("utf-8").split(" ") if v != "" and v != "." and v !=":"]:
         if "\r" in v: v = v.replace("\r", "")
         if "\n" in v: v = v.split("\n")
         if v == "": continue

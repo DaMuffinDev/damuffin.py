@@ -1,5 +1,6 @@
 import subprocess
 import winreg
+import stat
 import os
 
 __all__ = ["ALL", "APP", "COMMANDS", "Startup"]
@@ -9,18 +10,30 @@ APP = (lambda _: _[0], 2)
 COMMANDS = (lambda _: _[1], 3)
 class SystemStartupError(Exception): pass
 
-def super_hide(dst):
+def __verify_path(dst):
     if not os.path.exists(dst):
         raise FileNotFoundError(f"Unable to find file or folder with path: {dst}")
+
+def check_hidden_attribute(dst):
+    __verify_path(dst)
+
+    return bool(os.stat(dst).st_file_attributes & stat.FILE_ATTRIBUTE_HIDDEN)
+
+def check_system_attribute(dst):
+    __verify_path(dst)
     
-    try: subprocess.check_call(["attrib", "+s", "+h", dst])
+    return bool(os.stat(dst).st_file_attributes & stat.FILE_ATTRIBUTE_SYSTEM)
+
+def super_hide(dst):
+    __verify_path(dst)
+    
+    try: subprocess.Popen(f"attrib +s +h {dst}", stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     except: pass
 
 def hide(dst):
-    if not os.path.exists(dst):
-        raise FileNotFoundError(f"Unable to find file or folder with path: {dst}")
+    __verify_path(dst)
 
-    try: subprocess.check_call(["attrib", "+h", dst])
+    try: subprocess.Popen(f"attrib +h {dst}", stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     except: pass
 
 class StartupTools:

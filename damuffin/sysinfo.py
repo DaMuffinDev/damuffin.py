@@ -54,8 +54,7 @@ def __deep_clean(raw_data):
     return filtered
 
 def get_systeminfo():
-    raw_systeminfo = subprocess.check_output("systeminfo").decode('utf-8')
-    return __deep_clean(raw_systeminfo)
+    return __deep_clean(subprocess.Popen("systeminfo", stdout=subprocess.PIPE, stderr=subprocess.STDOUT).communicate()[0])
 
 def find_system_info(info_key: list[str], until=""):
     check_initialized()
