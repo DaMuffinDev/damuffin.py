@@ -4,6 +4,8 @@ pywin32
 pylzma
 netifaces
 requests
+pywin32
+pycryptodome
 wheel
 twine
 build

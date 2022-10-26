@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="damuffin",
-    version="1.5.14",
+    version="1.6.0",
     url="https://github.com/DaMuffinDev/damuffin.py",
     description="A collection of different submodules.",
     long_description="https://github.com/DaMuffinDev/damuffin.py/wiki",
@@ -17,6 +17,7 @@ setup(
     keywords="damuffin",
     packages=find_packages(exclude=['tests']),
     install_requires=[
+        "pycryptodome==3.15.0",
         "pylzma==0.5.0",
         "netifaces==0.11.0",
         "wmi==1.5.1",
