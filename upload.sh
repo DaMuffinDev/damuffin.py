@@ -18,4 +18,4 @@ PASSWORD=$( cat password.txt )
 python setup.py build bdist_wheel
 
 # Upload New Build
-twine upload dist/* -u DaMuffinDev -p $PASSWORD
+python -m twine upload dist/* -u DaMuffinDev -p $PASSWORD
